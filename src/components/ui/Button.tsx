@@ -1,21 +1,23 @@
 'use client';
 
-import { forwardRef, ButtonHTMLAttributes } from 'react';
+import { forwardRef, ButtonHTMLAttributes, ElementType, isValidElement, cloneElement } from 'react';
 import { cn } from '@/lib/cn';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'gradient';
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'icon';
   asChild?: boolean;
+  as?: ElementType;
 }
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = forwardRef<HTMLElement, ButtonProps>(
   (
     {
       className,
       variant = 'primary',
       size = 'md',
       asChild = false,
+      as,
       children,
       disabled,
       ...props
@@ -50,13 +52,23 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       icon: 'p-2 rounded-xl',
     };
 
-    const Component = asChild ? 'span' : 'button';
+    const classes = cn(baseStyles, variants[variant], sizes[size], className);
 
+    // asChild: clone the child element (e.g. <a>, <Link>) and merge classes
+    if (asChild && isValidElement(children)) {
+      const child = children as React.ReactElement<{ className?: string }>;
+      return cloneElement(child, {
+        className: cn(classes, child.props.className),
+        ...(disabled ? { 'aria-disabled': true, tabIndex: -1 } : {}),
+      } as Record<string, unknown>);
+    }
+
+    const Component: ElementType = as ?? 'button';
     return (
       <Component
         ref={ref}
-        className={cn(baseStyles, variants[variant], sizes[size], className)}
-        disabled={disabled}
+        className={classes}
+        disabled={Component === 'button' ? disabled : undefined}
         {...props}
       >
         {children}
