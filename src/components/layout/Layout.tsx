@@ -10,12 +10,10 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-[var(--background)]">
       <Navigation />
       <main className={cn('transition-all duration-300', 'lg:ml-64')}>
-        <div className="lg:pt-0 pt-16 lg:pl-0 pl-0">
-          {children}
-        </div>
+        <div className="lg:pt-0 pt-16 lg:pl-0 pl-0">{children}</div>
       </main>
     </div>
   );
