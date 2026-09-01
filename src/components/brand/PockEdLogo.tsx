@@ -65,12 +65,18 @@ export function PockEdLogo({
   const gradId = `pocked-logo-grad-${variant}-${size}`;
   const gradId2 = `pocked-logo-grad2-${variant}-${size}`;
 
+  // `onDark` is exposed as a className hook so it composes with the
+  // parent's text color (e.g. text-[var(--foreground)]) without
+  // overriding it via inline style. currentColor inside the wordmark
+  // SVG then picks up the surrounding color automatically.
+  const themeClass = onDark ? 'text-white' : 'text-[var(--foreground)]';
+
   if (variant === 'mark') {
     return (
       <span
         role="img"
         aria-label={ariaLabel}
-        className={cn('inline-flex items-center justify-center select-none', className)}
+        className={cn('inline-flex items-center justify-center select-none', themeClass, className)}
         style={{ width: w, height: h }}
       >
         <MarkSvg gradId={gradId} size={w} />
@@ -83,8 +89,8 @@ export function PockEdLogo({
       <span
         role="img"
         aria-label={ariaLabel}
-        className={cn('inline-flex items-center select-none', className)}
-        style={{ width: w, height: h, color: onDark ? '#F8FAFC' : '#0F172A' }}
+        className={cn('inline-flex items-center select-none', themeClass, className)}
+        style={{ width: w, height: h }}
       >
         <WordmarkSvg gradId={gradId2} width={w} height={h} />
       </span>
@@ -96,8 +102,8 @@ export function PockEdLogo({
     <span
       role="img"
       aria-label={ariaLabel}
-      className={cn('inline-flex items-center gap-3 select-none', className)}
-      style={{ height: h, color: onDark ? '#F8FAFC' : '#0F172A' }}
+      className={cn('inline-flex items-center gap-3 select-none', themeClass, className)}
+      style={{ height: h }}
     >
       <span
         style={{ width: h, height: h }}
