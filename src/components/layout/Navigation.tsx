@@ -106,7 +106,7 @@ export function Navigation() {
                           'w-9 h-9 rounded-xl flex items-center justify-center transition-colors',
                           isActive
                             ? 'bg-white/20 text-white'
-                            : 'bg-[var(--muted)] text-[var(--muted-foreground)] group-hover:bg-white group-hover:text-[var(--primary)]'
+                            : 'bg-[var(--muted)] text-[var(--muted-foreground)] group-hover:bg-[var(--card)] group-hover:text-[var(--primary)]'
                         )}
                       >
                         <item.icon className="w-5 h-5" aria-hidden="true" />
@@ -189,7 +189,7 @@ export function Navigation() {
                       'w-9 h-9 rounded-xl flex items-center justify-center transition-all',
                       isActive
                         ? 'bg-white/20 text-white'
-                        : 'bg-[var(--muted)] text-[var(--muted-foreground)] group-hover:bg-white group-hover:text-[var(--primary)] group-hover:shadow-sm'
+                        : 'bg-[var(--muted)] text-[var(--muted-foreground)] group-hover:bg-[var(--card)] group-hover:text-[var(--primary)] group-hover:shadow-sm'
                     )}
                   >
                     <item.icon className="w-5 h-5" aria-hidden="true" />
