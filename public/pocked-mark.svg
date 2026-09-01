@@ -1,0 +1,23 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PockEd mark">
+  <defs>
+    <linearGradient id="pocked-mark-grad" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer pocket -->
+  <rect x="8" y="8" width="48" height="48" rx="12" fill="url(#pocked-mark-grad)"/>
+  <!-- Stacked card behind -->
+  <rect x="15" y="15" width="36" height="36" rx="9" fill="white" fill-opacity="0.18"/>
+  <!-- Front P card -->
+  <rect x="20" y="20" width="28" height="28" rx="7" fill="white"/>
+  <!-- Letter P -->
+  <path d="M28 27H37.5C40.5 27 43 29.5 43 32.5C43 35.5 40.5 38 37.5 38H32V45H28V27ZM32 30.5V34.5H37.5C38.6 34.5 39.5 33.6 39.5 32.5C39.5 31.4 38.6 30.5 37.5 30.5H32Z" fill="#4F46E5"/>
+  <!-- Motion lines -->
+  <path d="M2 22H9" stroke="#4F46E5" stroke-width="2" stroke-linecap="round"/>
+  <path d="M0 32H7" stroke="#4F46E5" stroke-width="2" stroke-linecap="round"/>
+  <path d="M2 42H9" stroke="#4F46E5" stroke-width="2" stroke-linecap="round"/>
+  <!-- Sparkles -->
+  <path d="M56 4L57 7L60 8L57 9L56 12L55 9L52 8L55 7L56 4Z" fill="#10B981"/>
+  <path d="M58 56L58.7 58L60.7 58.7L58.7 59.4L58 61.4L57.3 59.4L55.3 58.7L57.3 58L58 56Z" fill="#F59E0B"/>
+</svg>

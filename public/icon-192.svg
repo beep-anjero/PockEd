@@ -1,5 +1,17 @@
-<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" rx="32" fill="#4F46E5"/>
-  <path d="M96 54C119.209 54 138 72.791 138 96C138 119.209 119.209 138 96 138C72.791 138 54 119.209 54 96C54 72.791 72.791 54 96 54Z" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M96 72V96L114 108" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PockEd">
+  <defs>
+    <linearGradient id="pocket-grad-192" x1="24" y1="24" x2="168" y2="168" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="url(#pocket-grad-192)"/>
+  <rect x="44" y="44" width="120" height="120" rx="24" fill="white" fill-opacity="0.18"/>
+  <rect x="56" y="56" width="96" height="96" rx="20" fill="white"/>
+  <path d="M84 76H112.5C120 76 126 82 126 89.5C126 97 120 103 112.5 103H96V124H84V76ZM96 87V92H112.5C114.7 92 116.5 90.2 116.5 88C116.5 85.8 114.7 84 112.5 84V87ZM96 92V87V92Z" fill="#4F46E5"/>
+  <path d="M6 64H24" stroke="#7C3AED" stroke-width="6" stroke-linecap="round"/>
+  <path d="M0 96H18" stroke="#7C3AED" stroke-width="6" stroke-linecap="round"/>
+  <path d="M6 128H24" stroke="#7C3AED" stroke-width="6" stroke-linecap="round"/>
+  <path d="M168 12L171 20L179 23L171 26L168 34L165 26L157 23L165 20L168 12Z" fill="#10B981"/>
+  <path d="M174 168L176 173L181 175L176 177L174 182L172 177L167 175L172 173L174 168Z" fill="#F59E0B"/>
 </svg>

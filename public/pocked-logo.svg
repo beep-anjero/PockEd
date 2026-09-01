@@ -1,0 +1,31 @@
+<svg width="240" height="80" viewBox="0 0 240 80" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PockEd">
+  <!-- Brand mark: stacked cards with a P and motion lines -->
+  <g>
+    <!-- Outer card / pocket frame -->
+    <rect x="14" y="14" width="56" height="56" rx="14" fill="url(#pocked-grad-1)"/>
+    <!-- Stacked inner card -->
+    <rect x="22" y="22" width="44" height="44" rx="10" fill="white" fill-opacity="0.18"/>
+    <!-- Front P card -->
+    <rect x="28" y="28" width="36" height="36" rx="8" fill="white"/>
+    <!-- Letter P -->
+    <path d="M40 38H50.5C53.8 38 56.5 40.7 56.5 44C56.5 47.3 53.8 50 50.5 50H44V58H40V38ZM44 41.5V46.5H50.5C51.9 46.5 53 45.4 53 44C53 42.6 51.9 41.5 50.5 41.5H44Z" fill="#4F46E5"/>
+    <!-- Motion lines on the left -->
+    <path d="M8 32H16" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M4 42H12" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M8 52H16" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Sparkles -->
+    <path d="M68 14L69.4 18.6L74 20L69.4 21.4L68 26L66.6 21.4L62 20L66.6 18.6L68 14Z" fill="#10B981"/>
+    <path d="M72 60L72.9 62.7L75.6 63.6L72.9 64.5L72 67.2L71.1 64.5L68.4 63.6L71.1 62.7L72 60Z" fill="#F59E0B"/>
+  </g>
+  <!-- Wordmark -->
+  <g>
+    <text x="92" y="50" font-family="'Poppins', system-ui, sans-serif" font-weight="700" font-size="30" fill="#0F172A">Pock<tspan fill="#4F46E5">Ed</tspan></text>
+    <text x="92" y="68" font-family="'Inter', system-ui, sans-serif" font-weight="500" font-size="9" letter-spacing="2" fill="#4F46E5">MICRO-LEARNING SPRINTS</text>
+  </g>
+  <defs>
+    <linearGradient id="pocked-grad-1" x1="14" y1="14" x2="70" y2="70" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+</svg>
