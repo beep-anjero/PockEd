@@ -8,8 +8,8 @@ import { Button } from './Button';
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
-  description?: string;
+  title?: ReactNode;
+  description?: ReactNode;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   showCloseButton?: boolean;
@@ -50,17 +50,17 @@ export function Modal({
             aria-hidden="true"
           />
           
-          <div className={cn('relative w-full bg-white dark:bg-gray-900 rounded-2xl shadow-xl transform transition-all', sizes[size])}>
+          <div className={cn('relative w-full bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-2xl transform transition-all', sizes[size])}>
             {(title || showCloseButton) && (
-              <div className="flex items-start justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <div>
+              <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-[var(--border)]">
+                <div className="min-w-0 flex-1">
                   {title && (
-                    <h2 id="modal-title" className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    <h2 id="modal-title" className="text-xl font-semibold text-[var(--foreground)] font-display flex items-center gap-2">
                       {title}
                     </h2>
                   )}
                   {description && (
-                    <p id="modal-description" className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p id="modal-description" className="mt-1 text-sm text-[var(--muted-foreground)]">
                       {description}
                     </p>
                   )}
@@ -71,7 +71,7 @@ export function Modal({
                     size="icon"
                     onClick={onClose}
                     aria-label="Close modal"
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                   >
                     <X className="w-5 h-5" />
                   </Button>
