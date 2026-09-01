@@ -287,7 +287,7 @@ export function Dashboard() {
                     </p>
                     <Button onClick={() => openScheduleModal()} size="lg">
                       <Plus className="w-5 h-5 mr-2" />
-                      Add Your First Item
+                      Add First Class
                     </Button>
                   </CardContent>
                 </Card>

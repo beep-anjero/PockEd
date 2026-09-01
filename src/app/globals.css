@@ -259,16 +259,19 @@ h1, h2, h3, h4, h5, h6,
   background-image: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
 }
 
-/* Soft glassmorphism for nav */
+/* Soft glassmorphism for nav — colors driven by tokens so they flip
+   with the OS theme via the same prefers-color-scheme media query
+   that drives the rest of the palette. */
 .glass-nav {
-  background: rgba(255, 255, 255, 0.85);
+  background: color-mix(in srgb, var(--card) 88%, transparent);
   backdrop-filter: saturate(180%) blur(14px);
   -webkit-backdrop-filter: saturate(180%) blur(14px);
-  border-color: rgba(229, 231, 235, 0.8);
+  border-color: var(--border);
 }
-.dark .glass-nav {
-  background: rgba(11, 16, 32, 0.78);
-  border-color: rgba(31, 41, 55, 0.6);
+@media (prefers-color-scheme: dark) {
+  .glass-nav {
+    background: color-mix(in srgb, var(--card) 82%, transparent);
+  }
 }
 
 /* Subtle card lift on hover */
