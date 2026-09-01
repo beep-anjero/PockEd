@@ -9,6 +9,7 @@ interface SprintTimerContextType {
   timeRemaining: number;
   isRunning: boolean;
   updateTimer: () => void;
+  resetSprint: () => void;
 }
 
 const SprintTimerContext = createContext<SprintTimerContextType | null>(null);
@@ -41,7 +42,9 @@ export function SprintTimerProvider({ children }: { children: ReactNode }) {
   }, [isRunning, updateTimer]);
 
   return (
-    <SprintTimerContext.Provider value={{ sprint, timeRemaining, isRunning, updateTimer }}>
+    <SprintTimerContext.Provider
+      value={{ sprint, timeRemaining, isRunning, updateTimer, resetSprint }}
+    >
       {children}
     </SprintTimerContext.Provider>
   );

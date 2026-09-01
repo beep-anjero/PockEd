@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { SprintTimerProvider } from '@/context/SprintTimerContext';
 import { SprintView } from '@/components/sprint/SprintView';
@@ -6,7 +7,9 @@ export default function SprintPage() {
   return (
     <SprintTimerProvider>
       <Layout>
-        <SprintView />
+        <Suspense fallback={null}>
+          <SprintView />
+        </Suspense>
       </Layout>
     </SprintTimerProvider>
   );

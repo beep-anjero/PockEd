@@ -13,7 +13,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
             {label}
           </label>
         )}
@@ -21,15 +21,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           type={type}
           className={cn(
-            'w-full px-4 py-3 rounded-xl border transition-all duration-200',
-            'bg-white dark:bg-gray-900',
-            'text-gray-900 dark:text-gray-100',
-            'placeholder:text-gray-400 dark:placeholder:text-gray-500',
-            'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+            'w-full px-4 py-2.5 rounded-xl border transition-all duration-200',
+            'bg-[var(--card)] text-[var(--foreground)]',
+            'placeholder:text-[var(--muted-foreground)]',
+            'focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/40 focus:border-[var(--primary)]',
             'disabled:opacity-50 disabled:cursor-not-allowed',
-            error 
-              ? 'border-red-500 focus:ring-red-500' 
-              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
+            error
+              ? 'border-red-500 focus:ring-red-500/30'
+              : 'border-[var(--border)] hover:border-[var(--muted-foreground)]/40',
             className
           )}
           {...props}
@@ -52,7 +51,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
             {label}
           </label>
         )}
@@ -60,14 +59,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           className={cn(
             'w-full px-4 py-3 rounded-xl border transition-all duration-200 resize-none',
-            'bg-white dark:bg-gray-900',
-            'text-gray-900 dark:text-gray-100',
-            'placeholder:text-gray-400 dark:placeholder:text-gray-500',
-            'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+            'bg-[var(--card)] text-[var(--foreground)]',
+            'placeholder:text-[var(--muted-foreground)]',
+            'focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/40 focus:border-[var(--primary)]',
             'disabled:opacity-50 disabled:cursor-not-allowed',
-            error 
-              ? 'border-red-500 focus:ring-red-500' 
-              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
+            error
+              ? 'border-red-500 focus:ring-red-500/30'
+              : 'border-[var(--border)] hover:border-[var(--muted-foreground)]/40',
             className
           )}
           {...props}
