@@ -43,7 +43,7 @@ export function Navigation() {
             className="flex items-center"
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <PockEdLogo variant="full" size="sm" />
+            <PockEdLogo variant="full" size="sm" className="text-[var(--foreground)]" />
           </Link>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -77,7 +77,7 @@ export function Navigation() {
               className="fixed left-0 top-0 bottom-0 w-72 bg-[var(--card)] border-r border-[var(--border)] shadow-xl flex flex-col"
             >
               <div className="px-6 pt-5 pb-4 border-b border-[var(--border)] flex items-center justify-between">
-                <PockEdLogo variant="full" size="sm" />
+                <PockEdLogo variant="full" size="sm" className="text-[var(--foreground)]" />
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-2 rounded-xl text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
@@ -163,7 +163,7 @@ export function Navigation() {
             href="/dashboard"
             className="px-6 py-5 border-b border-[var(--border)] hover:opacity-80 transition-opacity"
           >
-            <PockEdLogo variant="full" size="md" />
+            <PockEdLogo variant="full" size="md" className="text-[var(--foreground)]" />
           </Link>
 
           {/* Navigation */}
