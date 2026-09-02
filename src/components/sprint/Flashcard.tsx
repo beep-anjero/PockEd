@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { RotateCcw, Check, X, Lightbulb } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
@@ -25,11 +25,7 @@ export function Flashcard({
   totalCards,
   currentIndex,
 }: FlashcardProps) {
-  const [flipAnimation, setFlipAnimation] = useState(0);
-
-  useEffect(() => {
-    setFlipAnimation(isFlipped ? 180 : 0);
-  }, [isFlipped]);
+  const flipAnimation = isFlipped ? 180 : 0;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-6 py-6 perspective-1000">

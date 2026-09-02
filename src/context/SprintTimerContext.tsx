@@ -1,6 +1,6 @@
-'use client';
+ 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, ReactNode } from 'react';
 import { useStore } from '@/lib/store';
 import type { SprintState } from '@/types';
 
@@ -16,34 +16,26 @@ const SprintTimerContext = createContext<SprintTimerContextType | null>(null);
 
 export function SprintTimerProvider({ children }: { children: ReactNode }) {
   const { sprint, updateTimer, resetSprint } = useStore();
-  const [timeRemaining, setTimeRemaining] = useState(sprint.remainingTime);
-  const [isRunning, setIsRunning] = useState(sprint.isActive);
 
   useEffect(() => {
-    setTimeRemaining(sprint.remainingTime);
-    setIsRunning(sprint.isActive);
-  }, [sprint.remainingTime, sprint.isActive]);
+    if (!sprint.isActive) return;
 
-  useEffect(() => {
-    if (!isRunning) return;
-    
     const interval = setInterval(() => {
       updateTimer();
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          setIsRunning(false);
-          return 0;
-        }
-        return prev - 1;
-      });
     }, 1000);
-    
+
     return () => clearInterval(interval);
-  }, [isRunning, updateTimer]);
+  }, [sprint.isActive, updateTimer]);
 
   return (
     <SprintTimerContext.Provider
-      value={{ sprint, timeRemaining, isRunning, updateTimer, resetSprint }}
+      value={{
+        sprint,
+        timeRemaining: sprint.remainingTime,
+        isRunning: sprint.isActive,
+        updateTimer,
+        resetSprint,
+      }}
     >
       {children}
     </SprintTimerContext.Provider>

@@ -14,7 +14,8 @@ import {
   Trophy,
   Sparkles,
   Calendar,
-  BookOpen,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
@@ -37,7 +38,7 @@ export function Navigation() {
     <>
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 glass-nav border-b">
-        <div className="flex items-center justify-between h-16 px-4">
+        <div className="flex items-center justify-between gap-3 h-16 px-4">
           <Link
             href="/dashboard"
             className="flex items-center"
@@ -45,13 +46,22 @@ export function Navigation() {
           >
             <PockEdLogo variant="full" size="sm" className="text-[var(--foreground)]" />
           </Link>
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-xl text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
-            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-xl text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+            <button
+              onClick={() => useStore.getState().toggleTheme()}
+              className="flex-shrink-0 p-2 rounded-xl text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+              aria-label="Toggle theme"
+            >
+              {useStore.getState().theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -158,13 +168,22 @@ export function Navigation() {
       {/* Desktop sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:w-64 lg:flex lg:flex-col glass-nav border-r">
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <Link
-            href="/dashboard"
-            className="px-6 py-5 border-b border-[var(--border)] hover:opacity-80 transition-opacity"
-          >
-            <PockEdLogo variant="full" size="md" className="text-[var(--foreground)]" />
-          </Link>
+          {/* Logo + Theme Toggle */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
+            <Link
+              href="/dashboard"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <PockEdLogo variant="full" size="md" className="text-[var(--foreground)]" />
+            </Link>
+            <button
+              onClick={() => useStore.getState().toggleTheme()}
+              className="p-2 rounded-xl text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+              aria-label="Toggle theme"
+            >
+              {useStore.getState().theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          </div>
 
           {/* Navigation */}
           <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
@@ -226,9 +245,7 @@ export function Navigation() {
                 <span className="numeric text-2xl text-[var(--foreground)]">
                   {stats.currentStreak}
                 </span>
-                <span className="text-sm text-[var(--muted-foreground)]">
-                  day{stats.currentStreak === 1 ? '' : 's'}
-                </span>
+                <span className="text-sm text-[var(--muted-foreground)]">day{stats.currentStreak === 1 ? '' : 's'}</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">

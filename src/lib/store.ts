@@ -9,12 +9,12 @@ interface PockEdStore {
   updateDeck: (id: string, updates: Partial<Deck>) => void;
   deleteDeck: (id: string) => void;
   getDeck: (id: string) => Deck | undefined;
-  
+
   // Flashcards
   addCard: (deckId: string, card: Omit<Flashcard, 'id' | 'deckId' | 'createdAt' | 'updatedAt'>) => Flashcard;
   updateCard: (deckId: string, cardId: string, updates: Partial<Flashcard>) => void;
   deleteCard: (deckId: string, cardId: string) => void;
-  
+
   // Sprint State
   sprint: SprintState;
   startSprint: (deckId: string, duration: number) => void;
@@ -24,18 +24,22 @@ interface PockEdStore {
   flipCard: () => void;
   updateTimer: () => void;
   resetSprint: () => void;
-  
+
   // Stats
   stats: UserStats;
   updateStats: (session: SprintSession) => void;
   resetStats: () => void;
-  
+
   // Schedule
   schedule: ScheduleItem[];
   setSchedule: (items: ScheduleItem[]) => void;
   addSchedule: (item: Omit<ScheduleItem, 'id'>) => ScheduleItem;
   updateSchedule: (id: string, updates: Partial<ScheduleItem>) => void;
   deleteSchedule: (id: string) => void;
+
+  // Theme
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
 }
 
 const defaultSprintState: SprintState = {
@@ -72,13 +76,12 @@ export const useStore = create<PockEdStore>()(
   persist(
     (set, get) => ({
       decks: [],
-      
       sprint: defaultSprintState,
-      
       stats: defaultStats,
-      
       schedule: defaultSchedule,
-      
+      theme: 'light',
+      toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
+
       addDeck: (deckData) => {
         const newDeck: Deck = {
           ...deckData,
@@ -90,7 +93,7 @@ export const useStore = create<PockEdStore>()(
         set((state) => ({ decks: [...state.decks, newDeck] }));
         return newDeck;
       },
-      
+
       updateDeck: (id, updates) => {
         set((state) => ({
           decks: state.decks.map((d) =>
@@ -98,15 +101,15 @@ export const useStore = create<PockEdStore>()(
           ),
         }));
       },
-      
+
       deleteDeck: (id) => {
         set((state) => ({ decks: state.decks.filter((d) => d.id !== id) }));
       },
-      
+
       getDeck: (id) => {
         return get().decks.find((d) => d.id === id);
       },
-      
+
       addCard: (deckId, cardData) => {
         const newCard: Flashcard = {
           ...cardData,
@@ -117,12 +120,14 @@ export const useStore = create<PockEdStore>()(
         };
         set((state) => ({
           decks: state.decks.map((d) =>
-            d.id === deckId ? { ...d, cards: [...d.cards, newCard], updatedAt: Date.now() } : d
+            d.id === deckId
+              ? { ...d, cards: [...d.cards, newCard], updatedAt: Date.now() }
+              : d
           ),
         }));
         return newCard;
       },
-      
+
       updateCard: (deckId, cardId, updates) => {
         set((state) => ({
           decks: state.decks.map((d) =>
@@ -138,7 +143,7 @@ export const useStore = create<PockEdStore>()(
           ),
         }));
       },
-      
+
       deleteCard: (deckId, cardId) => {
         set((state) => ({
           decks: state.decks.map((d) =>
@@ -148,14 +153,14 @@ export const useStore = create<PockEdStore>()(
           ),
         }));
       },
-      
+
       startSprint: (deckId, duration) => {
         const deck = get().getDeck(deckId);
         if (!deck || deck.cards.length === 0) return;
-        
+
         // Shuffle cards for the sprint
         const shuffledCards = [...deck.cards].sort(() => Math.random() - 0.5);
-        
+
         set({
           sprint: {
             isActive: true,
@@ -169,11 +174,11 @@ export const useStore = create<PockEdStore>()(
           },
         });
       },
-      
+
       endSprint: () => {
         const { sprint, updateStats } = get();
         if (!sprint.isActive) return null;
-        
+
         const session: SprintSession = {
           id: generateId(),
           deckId: sprint.deckId!,
@@ -184,12 +189,12 @@ export const useStore = create<PockEdStore>()(
           completedAt: Date.now(),
           ratings: sprint.ratings,
         };
-        
+
         updateStats(session);
         set({ sprint: defaultSprintState });
         return session;
       },
-      
+
       nextCard: () => {
         set((state) => {
           if (!state.sprint.isActive) return state;
@@ -205,13 +210,13 @@ export const useStore = create<PockEdStore>()(
           };
         });
       },
-      
+
       rateCard: (rating) => {
         set((state) => {
           if (!state.sprint.isActive) return state;
           const nextIndex = state.sprint.currentCardIndex + 1;
           const newRatings = { ...state.sprint.ratings, [rating]: state.sprint.ratings[rating] + 1 };
-          
+
           if (nextIndex >= state.sprint.cards.length) {
             // Sprint complete - will be handled by endSprint call
             return {
@@ -221,7 +226,7 @@ export const useStore = create<PockEdStore>()(
               },
             };
           }
-          
+
           return {
             sprint: {
               ...state.sprint,
@@ -231,11 +236,11 @@ export const useStore = create<PockEdStore>()(
           };
         });
       },
-      
+
       flipCard: () => {
         // This is handled locally in the component via state
       },
-      
+
       updateTimer: () => {
         set((state) => {
           if (!state.sprint.isActive || state.sprint.remainingTime <= 0) return state;
@@ -247,17 +252,17 @@ export const useStore = create<PockEdStore>()(
           };
         });
       },
-      
+
       resetSprint: () => {
         set({ sprint: defaultSprintState });
       },
-      
+
       updateStats: (session) => {
         set((state) => {
           const today = new Date().toISOString().split('T')[0];
           const lastDate = state.stats.lastStudyDate;
           let newStreak = state.stats.currentStreak;
-          
+
           if (lastDate !== today) {
             const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
             if (lastDate === yesterday) {
@@ -268,7 +273,7 @@ export const useStore = create<PockEdStore>()(
               newStreak = 1;
             }
           }
-          
+
           return {
             stats: {
               totalSprints: state.stats.totalSprints + 1,
@@ -282,11 +287,11 @@ export const useStore = create<PockEdStore>()(
           };
         });
       },
-      
+
       resetStats: () => {
         set({ stats: defaultStats });
       },
-      
+
       setSchedule: (items) => {
         set({ schedule: items });
       },

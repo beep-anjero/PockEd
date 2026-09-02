@@ -63,32 +63,7 @@
   --radius-xl: 24px;
   --radius-2xl: 28px;
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-border: var(--border);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-ring: var(--ring);
-
-  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: var(--font-poppins), system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
+[data-theme="dark"] {
     --background: #0B1020;
     --foreground: #F8FAFC;
     --card: #131A30;
@@ -105,7 +80,6 @@
     --destructive: #F87171;
     --destructive-foreground: #0B1020;
     --ring: #A5B4FC;
-  }
 }
 
 * {
@@ -268,10 +242,8 @@ h1, h2, h3, h4, h5, h6,
   -webkit-backdrop-filter: saturate(180%) blur(14px);
   border-color: var(--border);
 }
-@media (prefers-color-scheme: dark) {
-  .glass-nav {
-    background: color-mix(in srgb, var(--card) 82%, transparent);
-  }
+[data-theme="dark"] .glass-nav {
+  background: color-mix(in srgb, var(--card) 82%, transparent);
 }
 
 /* Subtle card lift on hover */

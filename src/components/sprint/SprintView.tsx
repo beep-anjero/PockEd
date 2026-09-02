@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
 import {
   ArrowLeft,
   CheckCircle,
@@ -27,9 +27,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 
 export function SprintView() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { sprint, startSprint, endSprint, rateCard, nextCard, resetSprint, getDeck, decks } =
+  const { sprint, endSprint, rateCard, resetSprint } =
     useStore();
   const [isFlipped, setIsFlipped] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
@@ -38,33 +36,29 @@ export function SprintView() {
   );
 
   // Auto-show completion when sprint ends
+  const prevSprintActiveRef = useRef(sprint.isActive);
+
+  // Auto-show completion when sprint ends (transition from active to inactive)
   useEffect(() => {
-    if (!sprint.isActive && sprint.cards.length > 0 && !showCompletion) {
+    const wasActive = prevSprintActiveRef.current;
+    const isActive = sprint.isActive;
+    prevSprintActiveRef.current = isActive;
+
+    // Only trigger on transition from active to inactive
+    if (wasActive && !isActive && sprint.cards.length > 0 && !showCompletion) {
       const session = endSprint();
       if (session) {
-        setCompletedSession(session);
-        setShowCompletion(true);
-      }
+        setTimeout(() => {
+          setCompletedSession(session);
+          setShowCompletion(true);
+        }, 0);
     }
+  }
   }, [sprint.isActive, sprint.cards.length, showCompletion, endSprint]);
-
-  // Pre-select deck from query string
-  useEffect(() => {
-    const deckId = searchParams.get('deck');
-    if (deckId && !sprint.isActive) {
-      const deck = getDeck(deckId);
-      if (deck && deck.cards.length > 0) {
-        // Don't auto-start; let user pick duration. But we can remember selection.
-        // For now we do not auto-start; SprintSelection handles the choice.
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const currentCard = sprint.cards[sprint.currentCardIndex];
   const progress =
     sprint.cards.length > 0 ? (sprint.currentCardIndex / sprint.cards.length) * 100 : 0;
-  const deck = sprint.deckId ? getDeck(sprint.deckId) : null;
 
   const handleFlip = useCallback(() => setIsFlipped((v) => !v), []);
 
@@ -72,30 +66,9 @@ export function SprintView() {
     (rating: 'hard' | 'good' | 'easy') => {
       rateCard(rating);
       setIsFlipped(false);
-      // nextCard / endSprint handled by store / effect
     },
     [rateCard]
   );
-
-  // Keyboard shortcuts: Space to flip, 1/2/3 to rate
-  useEffect(() => {
-    if (!sprint.isActive || showCompletion) return;
-    const handler = (e: KeyboardEvent) => {
-      // Don't intercept when typing in inputs
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
-      if (e.code === 'Space') {
-        e.preventDefault();
-        handleFlip();
-      } else if (isFlipped) {
-        if (e.key === '1') handleRate('hard');
-        else if (e.key === '2') handleRate('good');
-        else if (e.key === '3') handleRate('easy');
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [sprint.isActive, showCompletion, isFlipped, handleFlip, handleRate]);
 
   const handleStartNewSprint = () => {
     resetSprint();
@@ -103,52 +76,6 @@ export function SprintView() {
     setCompletedSession(null);
     setIsFlipped(false);
   };
-
-  // Pre-selected deck from query
-  const queryDeckId = searchParams.get('deck');
-  const queryDeck = queryDeckId ? getDeck(queryDeckId) : null;
-
-  // Show deck selection if no active sprint
-  if (!sprint.isActive && !showCompletion) {
-    return (
-      <div className="min-h-screen bg-[var(--background)]">
-        <SprintTimer />
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14 pt-24">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-10"
-          >
-            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-pocked-gradient mb-5 shadow-lg shadow-indigo-500/30">
-              <Zap className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-            </div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-[var(--primary)] mb-2">
-              Micro-Sprint
-            </p>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--foreground)] mb-3 font-display">
-              Start a Focus Sprint
-            </h1>
-            <p className="text-[var(--muted-foreground)] max-w-2xl mx-auto text-base">
-              Pick a deck, set a timer, and turn your next 15 minutes into a productive study
-              session.
-            </p>
-          </motion.div>
-
-          {decks.length === 0 ? (
-            <EmptyDecksState onCreate={() => router.push('/decks')} />
-          ) : (
-            <SprintSelection
-              decks={decks}
-              preselectedDeck={queryDeck ?? null}
-              onStart={(deckId, duration) => {
-                startSprint(deckId, duration);
-              }}
-            />
-          )}
-        </div>
-      </div>
-    );
-  }
 
   // Show completion screen
   if (showCompletion && completedSession) {
