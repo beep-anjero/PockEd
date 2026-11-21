@@ -193,100 +193,6 @@ export function Dashboard() {
 
   return (
     <div className="flex h-[calc(100dvh-4rem)] lg:h-dvh overflow-hidden">
-      {/* ===== Pane 1: inner sidebar navigation ===== */}
-      <aside className="hidden md:flex md:w-60 lg:w-64 flex-col shrink-0 border-r border-[var(--border)] glass-nav">
-        <div className="px-5 pt-5 pb-4 border-b border-[var(--border)]">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-            Overview
-          </p>
-          <p className="mt-1 text-sm text-[var(--muted-foreground)]">{getGreeting()} 👋</p>
-        </div>
-
-        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
-          {SECTIONS.map((section) => {
-            const isActive = activeSection === section.key;
-            const count =
-              section.key === 'today'
-                ? schedule.length
-                : section.key === 'decks'
-                  ? decks.length
-                  : stats.totalSprints;
-            return (
-              <button
-                key={section.key}
-                onClick={() => switchSection(section.key)}
-                className={cn(
-                  'w-full group flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all text-left',
-                  isActive
-                    ? 'bg-pocked-gradient text-white shadow-md shadow-indigo-500/20'
-                    : 'text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]'
-                )}
-              >
-                <span
-                  className={cn(
-                    'w-9 h-9 rounded-xl flex items-center justify-center transition-all',
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-[var(--muted)] text-[var(--muted-foreground)] group-hover:bg-[var(--card)] group-hover:text-[var(--primary)]'
-                  )}
-                >
-                  <section.icon className="w-5 h-5" aria-hidden="true" />
-                </span>
-                <span className="flex flex-col min-w-0 flex-1">
-                  <span className="leading-tight">{section.label}</span>
-                  <span
-                    className={cn(
-                      'text-[11px] font-normal truncate',
-                      isActive ? 'text-white/80' : 'text-[var(--muted-foreground)]'
-                    )}
-                  >
-                    {section.description}
-                  </span>
-                </span>
-                <span
-                  className={cn(
-                    'numeric text-xs px-2 py-0.5 rounded-full',
-                    isActive ? 'bg-white/20 text-white' : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
-                  )}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Streak summary */}
-        <div className="p-3 border-t border-[var(--border)]">
-          <div className="p-4 rounded-2xl bg-pocked-gradient-soft border border-[var(--border)]">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-[var(--primary)]" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-                  Streak
-                </span>
-              </div>
-              <Sparkles className="w-4 h-4 text-[#7C3AED]" />
-            </div>
-            <div className="flex items-baseline gap-1.5 mb-2">
-              <span className="numeric text-2xl text-[var(--foreground)]">
-                {stats.currentStreak}
-              </span>
-              <span className="text-sm text-[var(--muted-foreground)]">
-                day{stats.currentStreak === 1 ? '' : 's'}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
-              <Trophy className="w-3.5 h-3.5 text-[#F59E0B]" />
-              <span className="numeric text-[var(--foreground)]">
-                {stats.totalXP.toLocaleString()}
-              </span>
-              <span>XP</span>
-            </div>
-          </div>
-        </div>
-      </aside>
-
       {/* ===== Pane 2: middle list / feed ===== */}
       <section className="flex-1 min-w-0 flex flex-col">
         {/* Header */}
@@ -319,23 +225,42 @@ export function Dashboard() {
             )}
           </div>
 
-          {/* Mobile section switcher */}
-          <div className="md:hidden flex gap-2 mt-3 overflow-x-auto pb-1 -mx-1 px-1">
-            {SECTIONS.map((section) => (
-              <button
-                key={section.key}
-                onClick={() => switchSection(section.key)}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors',
-                  activeSection === section.key
-                    ? 'bg-pocked-gradient text-white'
-                    : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
-                )}
-              >
-                <section.icon className="w-3.5 h-3.5" />
-                {section.label}
-              </button>
-            ))}
+          {/* Section switcher */}
+          <div className="flex gap-1.5 mt-3 overflow-x-auto pb-0.5">
+            {SECTIONS.map((section) => {
+              const isActive = activeSection === section.key;
+              const count =
+                section.key === 'today'
+                  ? schedule.length
+                  : section.key === 'decks'
+                    ? decks.length
+                    : stats.totalSprints;
+              return (
+                <button
+                  key={section.key}
+                  onClick={() => switchSection(section.key)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+                    isActive
+                      ? 'bg-pocked-gradient text-white shadow-md shadow-indigo-500/20'
+                      : 'bg-[var(--muted)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]/70 hover:text-[var(--foreground)]'
+                  )}
+                >
+                  <section.icon className="w-4 h-4" />
+                  {section.label}
+                  <span
+                    className={cn(
+                      'numeric text-xs px-1.5 py-0.5 rounded-full',
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-[var(--card)] text-[var(--muted-foreground)]'
+                    )}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </header>
 
@@ -602,14 +527,14 @@ function TodayFeed({
   if (schedule.length === 0) {
     return (
       <Card>
-        <CardContent className="py-14 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-pocked-gradient-soft mb-4">
-            <Calendar className="w-8 h-8 text-[var(--primary)]" />
+        <CardContent className="py-10 text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-pocked-gradient-soft mb-3">
+            <Calendar className="w-7 h-7 text-[var(--primary)]" />
           </div>
-          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2 font-display">
+          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1.5 font-display">
             No schedule for today yet
           </h3>
-          <p className="text-[var(--muted-foreground)] mb-6 max-w-md mx-auto">
+          <p className="text-sm text-[var(--muted-foreground)] mb-5 max-w-md mx-auto">
             Add your classes, study blocks, and breaks to see your free time for micro-learning
             sprints.
           </p>
@@ -1084,7 +1009,7 @@ function renderDetail({
   // Placeholder when nothing selected
   const freeBlocks = calculateFreeBlocks(schedule);
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-5 space-y-4">
       <div className="flex items-center gap-2">
         <Target className="w-4 h-4 text-[var(--primary)]" />
         <h3 className="font-semibold text-[var(--foreground)] font-display">Today&apos;s Goal</h3>
