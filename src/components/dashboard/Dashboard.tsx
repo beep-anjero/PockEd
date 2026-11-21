@@ -17,6 +17,11 @@ import {
   GraduationCap,
   Coffee,
   Layers,
+  BarChart3,
+  TrendingUp,
+  Timer,
+  X,
+  ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
@@ -26,18 +31,37 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import type { ScheduleItem, Deck } from '@/types';
+
+type SectionKey = 'today' | 'decks' | 'activity';
+
+const SECTIONS: {
+  key: SectionKey;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
+  { key: 'today', label: 'Today', description: 'Schedule & free time', icon: Calendar },
+  { key: 'decks', label: 'Decks', description: 'Flashcard collections', icon: Layers },
+  { key: 'activity', label: 'Activity', description: 'Your progress', icon: BarChart3 },
+];
 
 export function Dashboard() {
   const router = useRouter();
   const { schedule, decks, stats, startSprint, addSchedule, updateSchedule, deleteSchedule } =
     useStore();
+
+  const [activeSection, setActiveSection] = useState<SectionKey>('today');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Sprint duration modal
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
   const [showDurationModal, setShowDurationModal] = useState(false);
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
+
+  // Schedule modal
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
-
-  // Form states
   const [scheduleTitle, setScheduleTitle] = useState('');
   const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
   const [scheduleEndTime, setScheduleEndTime] = useState('10:00');
@@ -47,17 +71,12 @@ export function Dashboard() {
 
   const freeBlocks = calculateFreeBlocks(schedule);
   const durationOptions = getTimeBlockOptions(freeBlocks);
+  const nextFreeBlock = freeBlocks[0];
 
-  const scheduleColors = [
-    { value: 'bg-blue-500', label: 'Blue' },
-    { value: 'bg-purple-500', label: 'Purple' },
-    { value: 'bg-orange-500', label: 'Orange' },
-    { value: 'bg-red-500', label: 'Red' },
-    { value: 'bg-green-500', label: 'Green' },
-    { value: 'bg-indigo-500', label: 'Indigo' },
-    { value: 'bg-pink-500', label: 'Pink' },
-    { value: 'bg-cyan-500', label: 'Cyan' },
-  ];
+  const selectedSchedule =
+    activeSection === 'today' ? schedule.find((s) => s.id === selectedId) ?? null : null;
+  const selectedDeck =
+    activeSection === 'decks' ? decks.find((d) => d.id === selectedId) ?? null : null;
 
   const handleQuickStart = (deckId: string, duration: number) => {
     startSprint(deckId, duration);
@@ -69,19 +88,28 @@ export function Dashboard() {
     setShowDurationModal(true);
   };
 
-  const nextFreeBlock = freeBlocks[0];
+  const switchSection = (key: SectionKey) => {
+    setActiveSection(key);
+    setSelectedId(null);
+  };
+
+  // Schedule form
+  const scheduleColors = [
+    { value: 'bg-blue-500', label: 'Blue' },
+    { value: 'bg-purple-500', label: 'Purple' },
+    { value: 'bg-orange-500', label: 'Orange' },
+    { value: 'bg-red-500', label: 'Red' },
+    { value: 'bg-green-500', label: 'Green' },
+    { value: 'bg-indigo-500', label: 'Indigo' },
+    { value: 'bg-pink-500', label: 'Pink' },
+    { value: 'bg-cyan-500', label: 'Cyan' },
+  ];
 
   const validateScheduleForm = () => {
     const errors: Record<string, string> = {};
-    if (!scheduleTitle.trim()) {
-      errors.title = 'Title is required';
-    }
-    if (!scheduleStartTime) {
-      errors.startTime = 'Start time is required';
-    }
-    if (!scheduleEndTime) {
-      errors.endTime = 'End time is required';
-    }
+    if (!scheduleTitle.trim()) errors.title = 'Title is required';
+    if (!scheduleStartTime) errors.startTime = 'Start time is required';
+    if (!scheduleEndTime) errors.endTime = 'End time is required';
     if (scheduleStartTime && scheduleEndTime && scheduleStartTime >= scheduleEndTime) {
       errors.endTime = 'End time must be after start time';
     }
@@ -91,7 +119,6 @@ export function Dashboard() {
 
   const handleScheduleSubmit = () => {
     if (!validateScheduleForm()) return;
-
     if (editingScheduleId) {
       updateSchedule(editingScheduleId, {
         title: scheduleTitle.trim(),
@@ -112,7 +139,7 @@ export function Dashboard() {
     closeScheduleModal();
   };
 
-  const openScheduleModal = (item?: (typeof schedule)[0]) => {
+  const openScheduleModal = (item?: ScheduleItem) => {
     if (item) {
       setEditingScheduleId(item.id);
       setScheduleTitle(item.title);
@@ -146,427 +173,255 @@ export function Dashboard() {
   const handleDeleteSchedule = (id: string) => {
     if (confirm('Are you sure you want to delete this schedule item?')) {
       deleteSchedule(id);
+      if (selectedId === id) setSelectedId(null);
     }
   };
 
+  const detailContent = renderDetail({
+    section: activeSection,
+    scheduleItem: selectedSchedule,
+    deck: selectedDeck,
+    statKey: activeSection === 'activity' ? selectedId : null,
+    stats,
+    schedule,
+    decks,
+    onStudy: () => selectedSchedule && handleSelectDeck(decks[0].id),
+    onStartSprint: () => selectedDeck && handleSelectDeck(selectedDeck.id),
+    onEditSchedule: () => selectedSchedule && openScheduleModal(selectedSchedule),
+    onDeleteSchedule: () => selectedSchedule && handleDeleteSchedule(selectedSchedule.id),
+  });
+
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
-        <p className="text-sm font-semibold uppercase tracking-wider text-[var(--primary)] mb-2">
-          {getGreeting()}
-        </p>
-        <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-2 font-display">
-          Ready to learn?
-        </h1>
-        <p className="text-[var(--muted-foreground)] max-w-xl">
-          Turn your downtime into micro-learning sprints. PockEd turns short breaks between
-          classes into focused flashcard sessions.
-        </p>
-      </motion.div>
+    <div className="flex h-[calc(100dvh-4rem)] lg:h-dvh overflow-hidden">
+      {/* ===== Pane 1: inner sidebar navigation ===== */}
+      <aside className="hidden md:flex md:w-60 lg:w-64 flex-col shrink-0 border-r border-[var(--border)] glass-nav">
+        <div className="px-5 pt-5 pb-4 border-b border-[var(--border)]">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+            Overview
+          </p>
+          <p className="mt-1 text-sm text-[var(--muted-foreground)]">{getGreeting()} 👋</p>
+        </div>
 
-      {/* Streak & Quick Stats */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-      >
-        <HeroStreakCard streak={stats.currentStreak} />
-        <StatCard
-          icon={Trophy}
-          label="Total XP"
-          value={stats.totalXP.toLocaleString()}
-          accent="amber"
-        />
-        <StatCard
-          icon={Zap}
-          label="Sprints"
-          value={stats.totalSprints}
-          accent="indigo"
-        />
-        <StatCard
-          icon={Layers}
-          label="Cards Reviewed"
-          value={stats.totalCardsReviewed}
-          accent="green"
-        />
-      </motion.div>
-
-      {/* Next Available Time Block */}
-      {nextFreeBlock && decks.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8"
-        >
-          <Card className="overflow-hidden border-emerald-200/60 dark:border-emerald-900/40 bg-gradient-to-br from-emerald-500 via-emerald-500 to-teal-600 text-white">
-            <CardContent className="p-6 sm:p-8 relative">
-              <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
-              <div className="absolute -right-2 -bottom-8 w-24 h-24 rounded-full bg-white/10 blur-xl" />
-              <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
-                    <Clock className="w-7 h-7" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 text-emerald-50 text-sm font-medium mb-1">
-                      <Sparkles className="w-4 h-4" />
-                      Next available free block
-                    </div>
-                    <p className="text-2xl sm:text-3xl font-bold font-display">
-                      {nextFreeBlock.start} – {nextFreeBlock.end}
-                    </p>
-                    <p className="text-sm text-emerald-50/90 mt-0.5">
-                      {formatDuration(nextFreeBlock.duration)} of focus time
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  size="lg"
-                  onClick={() => handleSelectDeck(decks[0].id)}
-                  className="bg-white !text-emerald-600 hover:bg-emerald-50 shadow-lg shadow-emerald-900/20"
+        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
+          {SECTIONS.map((section) => {
+            const isActive = activeSection === section.key;
+            const count =
+              section.key === 'today'
+                ? schedule.length
+                : section.key === 'decks'
+                  ? decks.length
+                  : stats.totalSprints;
+            return (
+              <button
+                key={section.key}
+                onClick={() => switchSection(section.key)}
+                className={cn(
+                  'w-full group flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all text-left',
+                  isActive
+                    ? 'bg-pocked-gradient text-white shadow-md shadow-indigo-500/20'
+                    : 'text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]'
+                )}
+              >
+                <span
+                  className={cn(
+                    'w-9 h-9 rounded-xl flex items-center justify-center transition-all',
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : 'bg-[var(--muted)] text-[var(--muted-foreground)] group-hover:bg-[var(--card)] group-hover:text-[var(--primary)]'
+                  )}
                 >
-                  <Zap className="w-5 h-5 mr-2" />
-                  Start Sprint
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+                  <section.icon className="w-5 h-5" aria-hidden="true" />
+                </span>
+                <span className="flex flex-col min-w-0 flex-1">
+                  <span className="leading-tight">{section.label}</span>
+                  <span
+                    className={cn(
+                      'text-[11px] font-normal truncate',
+                      isActive ? 'text-white/80' : 'text-[var(--muted-foreground)]'
+                    )}
+                  >
+                    {section.description}
+                  </span>
+                </span>
+                <span
+                  className={cn(
+                    'numeric text-xs px-2 py-0.5 rounded-full',
+                    isActive ? 'bg-white/20 text-white' : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's Schedule — main column */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="lg:col-span-2"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-bold text-[var(--foreground)] font-display flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-[var(--primary)]" />
-                Today&apos;s Schedule
-              </h2>
-              <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
-                Plan your day to discover free time for sprints.
-              </p>
-            </div>
-            <Button size="sm" onClick={() => openScheduleModal()}>
-              <Plus className="w-4 h-4 mr-1.5" />
-              Add
-            </Button>
-          </div>
-
-          <AnimatePresence mode="popLayout">
-            {schedule.length === 0 ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <Card>
-                  <CardContent className="py-14 text-center">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-pocked-gradient-soft mb-4">
-                      <Calendar className="w-8 h-8 text-[var(--primary)]" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2 font-display">
-                      No schedule for today yet
-                    </h3>
-                    <p className="text-[var(--muted-foreground)] mb-6 max-w-md mx-auto">
-                      Add your classes, study blocks, and breaks to see your free time for
-                      micro-learning sprints.
-                    </p>
-                    <Button onClick={() => openScheduleModal()} size="lg">
-                      <Plus className="w-5 h-5 mr-2" />
-                      Add First Class
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="list"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-2"
-              >
-                {schedule.map((item, index) => {
-                  const isClass = item.type === 'class';
-                  const startMins =
-                    parseInt(item.startTime.split(':')[0]) * 60 +
-                    parseInt(item.startTime.split(':')[1]);
-                  const endMins =
-                    parseInt(item.endTime.split(':')[0]) * 60 +
-                    parseInt(item.endTime.split(':')[1]);
-                  const duration = endMins - startMins;
-                  return (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 12 }}
-                      transition={{ delay: 0.03 * index }}
-                      className={cn(
-                        'group flex items-center gap-4 p-4 rounded-2xl border transition-all card-hover',
-                        isClass
-                          ? 'bg-[var(--card)] border-[var(--border)] hover:border-blue-300 dark:hover:border-blue-700'
-                          : 'bg-emerald-50/60 dark:bg-emerald-900/10 border-emerald-200/70 dark:border-emerald-900/40'
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
-                          isClass
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                            : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
-                        )}
-                      >
-                        {isClass ? (
-                          <GraduationCap className="w-5 h-5" />
-                        ) : (
-                          <Coffee className="w-5 h-5" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="font-semibold text-[var(--foreground)] truncate">
-                            {item.title}
-                          </p>
-                          <span
-                            className={cn(
-                              'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
-                              isClass
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                            )}
-                          >
-                            {isClass ? 'Class' : 'Free Time'}
-                          </span>
-                        </div>
-                        <p className="text-sm text-[var(--muted-foreground)]">
-                          {item.startTime} – {item.endTime} • {formatDuration(duration)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                        {!isClass && decks.length > 0 && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs border-emerald-300 dark:border-emerald-800 !text-emerald-700 dark:!text-emerald-300 hover:!bg-emerald-100 dark:hover:!bg-emerald-900/40"
-                            onClick={() => handleSelectDeck(decks[0].id)}
-                          >
-                            <Zap className="w-3.5 h-3.5 mr-1" />
-                            Study
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-[var(--muted-foreground)] hover:text-[var(--primary)]"
-                          onClick={() => openScheduleModal(item)}
-                          aria-label="Edit schedule item"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-[var(--muted-foreground)] hover:text-red-600"
-                          onClick={() => handleDeleteSchedule(item.id)}
-                          aria-label="Delete schedule item"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* Side column: recent progress + AI tip */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="space-y-4"
-        >
-          {/* Today's goal */}
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-[var(--foreground)] font-display flex items-center gap-2">
-                  <Target className="w-4 h-4 text-[var(--primary)]" />
-                  Today
-                </h3>
+        {/* Streak summary */}
+        <div className="p-3 border-t border-[var(--border)]">
+          <div className="p-4 rounded-2xl bg-pocked-gradient-soft border border-[var(--border)]">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Flame className="w-4 h-4 text-[var(--primary)]" />
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-                  Goal
+                  Streak
                 </span>
               </div>
-              <p className="text-sm text-[var(--muted-foreground)] mb-3">
-                {getDailyGoalMessage(stats.currentStreak, freeBlocks.length)}
-              </p>
-              <div className="h-2 rounded-full bg-[var(--muted)] overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, (stats.currentStreak / 7) * 100)}%` }}
-                  transition={{ duration: 0.8, ease: 'easeOut' }}
-                  className="h-full bg-pocked-gradient rounded-full"
-                />
-              </div>
-              <p className="text-xs text-[var(--muted-foreground)] mt-2">
-                <span className="numeric text-[var(--foreground)]">
-                  {Math.min(stats.currentStreak, 7)}
-                </span>{' '}
-                of 7 days
-              </p>
-            </CardContent>
-          </Card>
+              <Sparkles className="w-4 h-4 text-[#7C3AED]" />
+            </div>
+            <div className="flex items-baseline gap-1.5 mb-2">
+              <span className="numeric text-2xl text-[var(--foreground)]">
+                {stats.currentStreak}
+              </span>
+              <span className="text-sm text-[var(--muted-foreground)]">
+                day{stats.currentStreak === 1 ? '' : 's'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
+              <Trophy className="w-3.5 h-3.5 text-[#F59E0B]" />
+              <span className="numeric text-[var(--foreground)]">
+                {stats.totalXP.toLocaleString()}
+              </span>
+              <span>XP</span>
+            </div>
+          </div>
+        </div>
+      </aside>
 
-          {/* Free time summary */}
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <h3 className="font-semibold text-[var(--foreground)] font-display">
-                  Free blocks
-                </h3>
-              </div>
-              <p className="numeric text-3xl text-[var(--foreground)] mb-1">
-                {freeBlocks.length}
-              </p>
-              <p className="text-xs text-[var(--muted-foreground)]">
-                {freeBlocks.length === 0
-                  ? 'Add free time to find opportunities'
-                  : `Up to ${formatDuration(Math.max(...freeBlocks.map((b) => b.duration), 0))} of study time available`}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* AI tip */}
-          <Card className="sparkle-accent">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-9 h-9 rounded-xl bg-pocked-gradient flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <h3 className="font-semibold text-[var(--foreground)] font-display">
-                  AI Notes
-                </h3>
-              </div>
-              <p className="text-sm text-[var(--muted-foreground)] mb-3">
-                Paste your lecture notes and PockEd generates flashcards for you in seconds.
-              </p>
-              <Button asChild variant="outline" size="sm" className="w-full">
-                <a href="/decks">Open a deck</a>
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Decks quick access */}
-      {decks.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="mt-10"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-bold text-[var(--foreground)] font-display flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-[var(--primary)]" />
-                Your Decks
-              </h2>
-              <p className="text-sm text-[var(--muted-foreground)] mt-0.5">
-                Quick access to your flashcard collections.
+      {/* ===== Pane 2: middle list / feed ===== */}
+      <section className="flex-1 min-w-0 flex flex-col">
+        {/* Header */}
+        <header className="shrink-0 px-4 sm:px-6 pt-4 pb-3 border-b border-[var(--border)] bg-[var(--card)]/60 backdrop-blur">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--primary)]">
+            {getGreeting()}
+          </p>
+          <div className="mt-1 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)] font-display truncate">
+                {SECTIONS.find((s) => s.key === activeSection)?.label}
+              </h1>
+              <p className="text-sm text-[var(--muted-foreground)] truncate">
+                {SECTIONS.find((s) => s.key === activeSection)?.description}
               </p>
             </div>
-            <a
-              href="/decks"
-              className="text-sm font-medium text-[var(--primary)] hover:underline"
+            {activeSection === 'today' && (
+              <Button size="sm" onClick={() => openScheduleModal()} className="shrink-0">
+                <Plus className="w-4 h-4 mr-1.5" />
+                Add
+              </Button>
+            )}
+            {activeSection === 'decks' && (
+              <Button size="sm" asChild className="shrink-0">
+                <a href="/decks">
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  New deck
+                </a>
+              </Button>
+            )}
+          </div>
+
+          {/* Mobile section switcher */}
+          <div className="md:hidden flex gap-2 mt-3 overflow-x-auto pb-1 -mx-1 px-1">
+            {SECTIONS.map((section) => (
+              <button
+                key={section.key}
+                onClick={() => switchSection(section.key)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors',
+                  activeSection === section.key
+                    ? 'bg-pocked-gradient text-white'
+                    : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+                )}
+              >
+                <section.icon className="w-3.5 h-3.5" />
+                {section.label}
+              </button>
+            ))}
+          </div>
+        </header>
+
+        {/* List body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+              className="space-y-3"
             >
-              View all →
-            </a>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {decks.slice(0, 3).map((deck, index) => {
-              const mastery = deck.cards.length > 0 ? Math.round((deck.cards.length / Math.max(deck.cards.length, 1)) * 100) : 0;
-              return (
-                <motion.div
-                  key={deck.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 * index }}
+              {activeSection === 'today' && (
+                <TodayFeed
+                  schedule={schedule}
+                  decks={decks}
+                  nextFreeBlock={nextFreeBlock}
+                  selectedId={selectedId}
+                  onSelect={(id) => setSelectedId(id)}
+                  onAdd={() => openScheduleModal()}
+                  onStartSprint={() => decks.length > 0 && handleSelectDeck(decks[0].id)}
+                />
+              )}
+
+              {activeSection === 'decks' && (
+                <DecksFeed
+                  decks={decks}
+                  selectedId={selectedId}
+                  onSelect={(id) => setSelectedId(id)}
+                />
+              )}
+
+              {activeSection === 'activity' && (
+                <ActivityFeed
+                  stats={stats}
+                  selectedId={selectedId}
+                  onSelect={(id) => setSelectedId(id)}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </section>
+
+      {/* ===== Pane 3: detail panel (desktop) ===== */}
+      <aside className="hidden lg:flex lg:w-80 xl:w-96 flex-col shrink-0 border-l border-[var(--border)] bg-[var(--card)]/40 overflow-y-auto">
+        {detailContent}
+      </aside>
+
+      {/* Detail panel (mobile slide-over) */}
+      <AnimatePresence>
+        {selectedId && (
+          <motion.div
+            key="mobile-detail"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="lg:hidden fixed inset-0 z-50"
+          >
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setSelectedId(null)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-[var(--card)] border-l border-[var(--border)] shadow-2xl flex flex-col"
+            >
+              <div className="flex justify-end p-3 shrink-0">
+                <button
+                  onClick={() => setSelectedId(null)}
+                  className="p-2 rounded-xl text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+                  aria-label="Close details"
                 >
-                  <Card
-                    className="group cursor-pointer h-full card-hover"
-                    onClick={() => handleSelectDeck(deck.id)}
-                  >
-                    <CardContent className="p-5">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div
-                          className={cn(
-                            'w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm',
-                            deck.color
-                          )}
-                        >
-                          <BookOpen className="w-6 h-6" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-[var(--foreground)] truncate font-display">
-                            {deck.name}
-                          </h3>
-                          <p className="text-xs text-[var(--muted-foreground)]">
-                            {deck.cards.length} card{deck.cards.length === 1 ? '' : 's'}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-sm text-[var(--muted-foreground)] mb-4 line-clamp-2 min-h-[2.5rem]">
-                        {deck.description || 'No description yet.'}
-                      </p>
-                      <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
-                        <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
-                          <span className="numeric text-[var(--foreground)]">
-                            {mastery}%
-                          </span>
-                          <span>ready</span>
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/sprint?deck=${deck.id}`);
-                          }}
-                          className="group-hover:shadow-md"
-                        >
-                          <Zap className="w-3.5 h-3.5 mr-1" />
-                          Sprint
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto">{detailContent}</div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Duration Selection Modal */}
       <Modal
@@ -584,9 +439,7 @@ export function Dashboard() {
               className="w-full justify-between"
               onClick={() => {
                 setSelectedDuration(option.value);
-                if (selectedDeckId) {
-                  handleQuickStart(selectedDeckId, option.value);
-                }
+                if (selectedDeckId) handleQuickStart(selectedDeckId, option.value);
                 setShowDurationModal(false);
                 setSelectedDuration(null);
                 setSelectedDeckId(null);
@@ -725,6 +578,694 @@ export function Dashboard() {
   );
 }
 
+/* ============================================================
+   Middle pane feeds
+   ============================================================ */
+
+function TodayFeed({
+  schedule,
+  decks,
+  nextFreeBlock,
+  selectedId,
+  onSelect,
+  onAdd,
+  onStartSprint,
+}: {
+  schedule: ScheduleItem[];
+  decks: Deck[];
+  nextFreeBlock: { start: string; end: string; duration: number } | undefined;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onAdd: () => void;
+  onStartSprint: () => void;
+}) {
+  if (schedule.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-14 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-pocked-gradient-soft mb-4">
+            <Calendar className="w-8 h-8 text-[var(--primary)]" />
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2 font-display">
+            No schedule for today yet
+          </h3>
+          <p className="text-[var(--muted-foreground)] mb-6 max-w-md mx-auto">
+            Add your classes, study blocks, and breaks to see your free time for micro-learning
+            sprints.
+          </p>
+          <Button onClick={onAdd} size="lg">
+            <Plus className="w-5 h-5 mr-2" />
+            Add First Class
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      {nextFreeBlock && decks.length > 0 && (
+        <Card className="overflow-hidden border-emerald-200/60 dark:border-emerald-900/40 bg-gradient-to-br from-emerald-500 via-emerald-500 to-teal-600 text-white">
+          <CardContent className="p-5 relative">
+            <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10 blur-2xl" />
+            <div className="relative flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5 text-emerald-50 text-xs font-medium">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Next free block
+                  </div>
+                  <p className="text-lg font-bold font-display">
+                    {nextFreeBlock.start} – {nextFreeBlock.end}
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={onStartSprint}
+                className="bg-white !text-emerald-600 hover:bg-emerald-50 shadow-md shadow-emerald-900/20"
+              >
+                <Zap className="w-4 h-4 mr-1.5" />
+                Sprint
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {schedule.map((item) => {
+        const isClass = item.type === 'class';
+        const startMins =
+          parseInt(item.startTime.split(':')[0]) * 60 + parseInt(item.startTime.split(':')[1]);
+        const endMins =
+          parseInt(item.endTime.split(':')[0]) * 60 + parseInt(item.endTime.split(':')[1]);
+        const duration = endMins - startMins;
+        const isSelected = selectedId === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => onSelect(item.id)}
+            className={cn(
+              'w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all',
+              isSelected
+                ? 'border-[var(--primary)] bg-[var(--muted)]/70 shadow-sm'
+                : 'bg-[var(--card)] border-[var(--border)] hover:border-[var(--muted-foreground)]/40 card-hover'
+            )}
+          >
+            <div
+              className={cn(
+                'w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0',
+                isClass
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                  : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
+              )}
+            >
+              {isClass ? <GraduationCap className="w-5 h-5" /> : <Coffee className="w-5 h-5" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <p className="font-semibold text-[var(--foreground)] truncate">{item.title}</p>
+                <span
+                  className={cn(
+                    'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
+                    isClass
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                  )}
+                >
+                  {isClass ? 'Class' : 'Free'}
+                </span>
+              </div>
+              <p className="text-sm text-[var(--muted-foreground)]">
+                {item.startTime} – {item.endTime} • {formatDuration(duration)}
+              </p>
+            </div>
+            <ArrowRight
+              className={cn(
+                'w-4 h-4 flex-shrink-0 transition-opacity',
+                isSelected ? 'text-[var(--primary)]' : 'text-[var(--muted-foreground)] opacity-0 group-hover:opacity-100'
+              )}
+            />
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
+function DecksFeed({
+  decks,
+  selectedId,
+  onSelect,
+}: {
+  decks: Deck[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  if (decks.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-14 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-pocked-gradient-soft mb-4">
+            <Layers className="w-8 h-8 text-[var(--primary)]" />
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2 font-display">
+            No decks yet
+          </h3>
+          <p className="text-[var(--muted-foreground)] mb-6 max-w-md mx-auto">
+            Create a deck to start turning your downtime into flashcard sprints.
+          </p>
+          <Button asChild size="lg">
+            <a href="/decks">
+              <Plus className="w-5 h-5 mr-2" />
+              Create a Deck
+            </a>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      {decks.map((deck) => {
+        const cardCount = deck.cards.length;
+        const isSelected = selectedId === deck.id;
+        return (
+          <button
+            key={deck.id}
+            onClick={() => onSelect(deck.id)}
+            className={cn(
+              'w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all',
+              isSelected
+                ? 'border-[var(--primary)] bg-[var(--muted)]/70 shadow-sm'
+                : 'bg-[var(--card)] border-[var(--border)] hover:border-[var(--muted-foreground)]/40 card-hover'
+            )}
+          >
+            <div
+              className={cn(
+                'w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm flex-shrink-0',
+                deck.color
+              )}
+            >
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-[var(--foreground)] truncate">{deck.name}</p>
+              <p className="text-sm text-[var(--muted-foreground)] truncate">
+                {cardCount} card{cardCount === 1 ? '' : 's'}
+                {deck.description ? ` • ${deck.description}` : ''}
+              </p>
+            </div>
+            <ArrowRight
+              className={cn(
+                'w-4 h-4 flex-shrink-0',
+                isSelected ? 'text-[var(--primary)]' : 'text-[var(--muted-foreground)]'
+              )}
+            />
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
+function ActivityFeed({
+  stats,
+  selectedId,
+  onSelect,
+}: {
+  stats: ReturnType<typeof useStore.getState>['stats'];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const cardsPerMinute =
+    stats.totalTimeStudied > 0
+      ? Math.round((stats.totalCardsReviewed / stats.totalTimeStudied) * 100) / 100
+      : 0;
+  const items = [
+    {
+      key: 'streak',
+      label: 'Current Streak',
+      value: `${stats.currentStreak}`,
+      unit: `day${stats.currentStreak === 1 ? '' : 's'}`,
+      icon: Flame,
+      accent: 'amber' as const,
+    },
+    {
+      key: 'xp',
+      label: 'Total XP',
+      value: stats.totalXP.toLocaleString(),
+      unit: 'XP',
+      icon: Trophy,
+      accent: 'indigo' as const,
+    },
+    {
+      key: 'sprints',
+      label: 'Sprints',
+      value: `${stats.totalSprints}`,
+      unit: 'sessions',
+      icon: Zap,
+      accent: 'purple' as const,
+    },
+    {
+      key: 'cards',
+      label: 'Cards Reviewed',
+      value: `${stats.totalCardsReviewed}`,
+      unit: 'cards',
+      icon: Layers,
+      accent: 'green' as const,
+    },
+    {
+      key: 'focus',
+      label: 'Focus Time',
+      value: formatDuration(stats.totalTimeStudied),
+      unit: '',
+      icon: Timer,
+      accent: 'cyan' as const,
+    },
+    {
+      key: 'speed',
+      label: 'Review Speed',
+      value: `${cardsPerMinute}`,
+      unit: 'cards/min',
+      icon: TrendingUp,
+      accent: 'rose' as const,
+    },
+  ];
+
+  const accentMap = {
+    indigo: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
+    purple: 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400',
+    green: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+    amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+    cyan: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400',
+    rose: 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400',
+  } as const;
+
+  return (
+    <>
+      {items.map((item) => {
+        const isSelected = selectedId === item.key;
+        return (
+          <button
+            key={item.key}
+            onClick={() => onSelect(item.key)}
+            className={cn(
+              'w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all',
+              isSelected
+                ? 'border-[var(--primary)] bg-[var(--muted)]/70 shadow-sm'
+                : 'bg-[var(--card)] border-[var(--border)] hover:border-[var(--muted-foreground)]/40 card-hover'
+            )}
+          >
+            <div
+              className={cn(
+                'w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0',
+                accentMap[item.accent]
+              )}
+            >
+              <item.icon className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[var(--muted-foreground)]">{item.label}</p>
+              <p className="font-semibold text-[var(--foreground)]">
+                <span className="numeric">{item.value}</span>
+                {item.unit && (
+                  <span className="text-sm text-[var(--muted-foreground)]"> {item.unit}</span>
+                )}
+              </p>
+            </div>
+            <ArrowRight
+              className={cn(
+                'w-4 h-4 flex-shrink-0',
+                isSelected ? 'text-[var(--primary)]' : 'text-[var(--muted-foreground)]'
+              )}
+            />
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
+/* ============================================================
+   Detail panel
+   ============================================================ */
+
+function renderDetail({
+  section,
+  scheduleItem,
+  deck,
+  statKey,
+  stats,
+  schedule,
+  decks,
+  onStudy,
+  onStartSprint,
+  onEditSchedule,
+  onDeleteSchedule,
+}: {
+  section: SectionKey;
+  scheduleItem: ScheduleItem | null;
+  deck: Deck | null;
+  statKey: string | null;
+  stats: ReturnType<typeof useStore.getState>['stats'];
+  schedule: ScheduleItem[];
+  decks: Deck[];
+  onStudy: () => void;
+  onStartSprint: () => void;
+  onEditSchedule: () => void;
+  onDeleteSchedule: () => void;
+}) {
+  // Schedule detail
+  if (section === 'today' && scheduleItem) {
+    const isClass = scheduleItem.type === 'class';
+    const startMins =
+      parseInt(scheduleItem.startTime.split(':')[0]) * 60 +
+      parseInt(scheduleItem.startTime.split(':')[1]);
+    const endMins =
+      parseInt(scheduleItem.endTime.split(':')[0]) * 60 +
+      parseInt(scheduleItem.endTime.split(':')[1]);
+    const duration = endMins - startMins;
+    return (
+      <div className="p-6 space-y-5">
+        <div className="flex items-start gap-4">
+          <div
+            className={cn(
+              'w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0',
+              isClass
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
+            )}
+          >
+            {isClass ? <GraduationCap className="w-7 h-7" /> : <Coffee className="w-7 h-7" />}
+          </div>
+          <div className="min-w-0">
+            <span
+              className={cn(
+                'inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full mb-1',
+                isClass
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+              )}
+            >
+              {isClass ? 'Class' : 'Free Time'}
+            </span>
+            <h2 className="text-xl font-bold text-[var(--foreground)] font-display">
+              {scheduleItem.title}
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <DetailMeta label="Starts" value={scheduleItem.startTime} icon={Clock} />
+          <DetailMeta label="Ends" value={scheduleItem.endTime} icon={Clock} />
+        </div>
+        <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
+          <Zap className="w-4 h-4 text-[var(--primary)]" />
+          {formatDuration(duration)} block
+        </div>
+
+        <div className="pt-2 space-y-2">
+          {!isClass && decks.length > 0 && (
+            <Button className="w-full" onClick={onStudy}>
+              <Zap className="w-4 h-4 mr-2" />
+              Study Now
+            </Button>
+          )}
+          {isClass && decks.length > 0 && (
+            <Button className="w-full" onClick={onStudy}>
+              <BookOpen className="w-4 h-4 mr-2" />
+              Review This Subject
+            </Button>
+          )}
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={onEditSchedule}>
+              <Edit className="w-4 h-4 mr-1.5" />
+              Edit
+            </Button>
+            <Button variant="danger" className="flex-1" onClick={onDeleteSchedule}>
+              <Trash2 className="w-4 h-4 mr-1.5" />
+              Delete
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Deck detail
+  if (section === 'decks' && deck) {
+    const cardCount = deck.cards.length;
+    return (
+      <div className="p-6 space-y-5">
+        <div className="flex items-start gap-4">
+          <div
+            className={cn(
+              'w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-sm flex-shrink-0',
+              deck.color
+            )}
+          >
+            <BookOpen className="w-7 h-7" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold text-[var(--foreground)] font-display">
+              {deck.name}
+            </h2>
+            <p className="text-sm text-[var(--muted-foreground)]">
+              {cardCount} card{cardCount === 1 ? '' : 's'}
+            </p>
+          </div>
+        </div>
+
+        <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
+          {deck.description || 'No description yet.'}
+        </p>
+
+        <div>
+          <div className="flex items-center justify-between text-xs mb-1.5">
+            <span className="text-[var(--muted-foreground)]">
+              {cardCount === 0 ? 'Empty deck' : 'Ready to study'}
+            </span>
+            <span className="numeric text-[var(--foreground)]">{cardCount}</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-[var(--muted)] overflow-hidden">
+            <div
+              className={cn('h-full rounded-full', deck.color)}
+              style={{ width: cardCount === 0 ? '4%' : `${Math.min(100, cardCount * 4)}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="pt-2 space-y-2">
+          <Button className="w-full" onClick={onStartSprint} disabled={cardCount === 0}>
+            <Zap className="w-4 h-4 mr-2" />
+            Start Sprint
+          </Button>
+          <Button asChild variant="outline" className="w-full">
+            <a href="/decks">
+              <Layers className="w-4 h-4 mr-2" />
+              Open in Decks
+            </a>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Activity detail
+  if (section === 'activity' && statKey) {
+    return <ActivityDetail statKey={statKey} stats={stats} decks={decks} />;
+  }
+
+  // Placeholder when nothing selected
+  const freeBlocks = calculateFreeBlocks(schedule);
+  return (
+    <div className="p-6 space-y-5">
+      <div className="flex items-center gap-2">
+        <Target className="w-4 h-4 text-[var(--primary)]" />
+        <h3 className="font-semibold text-[var(--foreground)] font-display">Today&apos;s Goal</h3>
+      </div>
+      <p className="text-sm text-[var(--muted-foreground)]">
+        {getDailyGoalMessage(stats.currentStreak, freeBlocks.length)}
+      </p>
+      <div className="h-2 rounded-full bg-[var(--muted)] overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${Math.min(100, (stats.currentStreak / 7) * 100)}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="h-full bg-pocked-gradient rounded-full"
+        />
+      </div>
+      <p className="text-xs text-[var(--muted-foreground)]">
+        <span className="numeric text-[var(--foreground)]">
+          {Math.min(stats.currentStreak, 7)}
+        </span>{' '}
+        of 7 days
+      </p>
+
+      <div className="grid grid-cols-2 gap-3 pt-1">
+        <DetailMeta label="Free blocks" value={`${freeBlocks.length}`} icon={Clock} />
+        <DetailMeta label="Sprints" value={`${stats.totalSprints}`} icon={Zap} />
+      </div>
+
+      <Card className="sparkle-accent">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-9 h-9 rounded-xl bg-pocked-gradient flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <h3 className="font-semibold text-[var(--foreground)] font-display">AI Notes</h3>
+          </div>
+          <p className="text-sm text-[var(--muted-foreground)] mb-3">
+            Paste your lecture notes and PockEd generates flashcards for you in seconds.
+          </p>
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <a href="/decks">Open a deck</a>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function DetailMeta({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="p-3 rounded-2xl bg-[var(--muted)]/70 border border-[var(--border)]">
+      <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] mb-1">
+        <Icon className="w-3.5 h-3.5" />
+        {label}
+      </div>
+      <p className="numeric text-lg text-[var(--foreground)]">{value}</p>
+    </div>
+  );
+}
+
+function ActivityDetail({
+  statKey,
+  stats,
+  decks,
+}: {
+  statKey: string;
+  stats: ReturnType<typeof useStore.getState>['stats'];
+  decks: Deck[];
+}) {
+  const cardsPerMinute =
+    stats.totalTimeStudied > 0
+      ? Math.round((stats.totalCardsReviewed / stats.totalTimeStudied) * 100) / 100
+      : 0;
+  const totalCards = decks.reduce((acc, d) => acc + d.cards.length, 0);
+
+  const config: Record<
+    string,
+    {
+      label: string;
+      value: string;
+      icon: React.ComponentType<{ className?: string }>;
+      description: string;
+      percent: number;
+      accent: string;
+    }
+  > = {
+    streak: {
+      label: 'Current Streak',
+      value: `${stats.currentStreak}`,
+      icon: Flame,
+      description: getStreakMessage(stats.currentStreak),
+      percent: Math.min((stats.currentStreak / 7) * 100, 100),
+      accent: 'bg-gradient-to-r from-amber-400 to-orange-500',
+    },
+    xp: {
+      label: 'Total XP',
+      value: stats.totalXP.toLocaleString(),
+      icon: Trophy,
+      description: `Level ${Math.floor(stats.totalXP / 1000) + 1} — ${stats.totalXP % 1000} / 1000 XP to the next level.`,
+      percent: ((stats.totalXP % 1000) / 1000) * 100,
+      accent: 'bg-gradient-to-r from-amber-400 to-amber-500',
+    },
+    sprints: {
+      label: 'Sprints',
+      value: `${stats.totalSprints}`,
+      icon: Zap,
+      description: 'Micro-learning sessions completed. Every sprint counts toward your streak.',
+      percent: Math.min((stats.totalSprints / 20) * 100, 100),
+      accent: 'bg-pocked-gradient',
+    },
+    cards: {
+      label: 'Cards Reviewed',
+      value: `${stats.totalCardsReviewed}`,
+      icon: Layers,
+      description: `Across ${totalCards} card${totalCards === 1 ? '' : 's'} in ${decks.length} deck${decks.length === 1 ? '' : 's'}.`,
+      percent: Math.min((stats.totalCardsReviewed / 100) * 100, 100),
+      accent: 'bg-gradient-to-r from-emerald-500 to-teal-500',
+    },
+    focus: {
+      label: 'Focus Time',
+      value: formatDuration(stats.totalTimeStudied),
+      icon: Timer,
+      description: 'Total time spent in focused sprint sessions.',
+      percent: Math.min((stats.totalTimeStudied / 600) * 100, 100),
+      accent: 'bg-gradient-to-r from-cyan-500 to-blue-500',
+    },
+    speed: {
+      label: 'Review Speed',
+      value: `${cardsPerMinute}`,
+      icon: TrendingUp,
+      description:
+        cardsPerMinute === 0
+          ? 'Complete a sprint to measure your pace.'
+          : 'Average cards reviewed per minute during sprints.',
+      percent: Math.min((cardsPerMinute / 2) * 100, 100),
+      accent: 'bg-gradient-to-r from-violet-500 to-purple-500',
+    },
+  };
+
+  const item = config[statKey];
+  if (!item) return null;
+
+  return (
+    <div className="p-6 space-y-5">
+      <div className="flex items-start gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-pocked-gradient-soft flex items-center justify-center flex-shrink-0">
+          <item.icon className="w-7 h-7 text-[var(--primary)]" />
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold text-[var(--foreground)] font-display">{item.label}</h2>
+          <p className="numeric text-2xl text-[var(--foreground)]">{item.value}</p>
+        </div>
+      </div>
+
+      <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{item.description}</p>
+
+      <div>
+        <div className="h-2 rounded-full bg-[var(--muted)] overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.max(2, item.percent)}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className={cn('h-full rounded-full', item.accent)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   Helpers
+   ============================================================ */
+
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 5) return 'Good night';
@@ -745,64 +1286,6 @@ function getDailyGoalMessage(streak: number, freeBlockCount: number): string {
     return `${7 - streak} day${7 - streak === 1 ? '' : 's'} to a 7-day streak. Keep going!`;
   }
   return 'You are on a 7+ day streak. Amazing consistency!';
-}
-
-function HeroStreakCard({ streak }: { streak: number }) {
-  return (
-    <Card className="overflow-hidden border-0 sm:col-span-2 lg:col-span-1 bg-pocked-gradient text-white">
-      <CardContent className="p-5 sm:p-6 relative">
-        <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -right-2 -bottom-8 w-24 h-24 rounded-full bg-white/10 blur-xl" />
-        <div className="relative">
-          <div className="flex items-center gap-2 text-indigo-100 text-xs font-semibold uppercase tracking-wider mb-2">
-            <Flame className="w-4 h-4" />
-            Current Streak
-          </div>
-          <div className="flex items-baseline gap-2 mb-1">
-            <span className="numeric text-4xl sm:text-5xl">{streak}</span>
-            <span className="text-sm text-indigo-100">day{streak === 1 ? '' : 's'}</span>
-          </div>
-          <p className="text-sm text-indigo-100">{getStreakMessage(streak)}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  accent,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: number | string;
-  accent: 'indigo' | 'green' | 'amber' | 'rose' | 'purple';
-}) {
-  const accentMap: Record<typeof accent, { bg: string; text: string }> = {
-    indigo: { bg: 'bg-indigo-100 dark:bg-indigo-900/30', text: 'text-indigo-600 dark:text-indigo-400' },
-    green: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400' },
-    amber: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400' },
-    rose: { bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-600 dark:text-rose-400' },
-    purple: { bg: 'bg-violet-100 dark:bg-violet-900/30', text: 'text-violet-600 dark:text-violet-400' },
-  };
-  const c = accentMap[accent];
-  return (
-    <Card>
-      <CardContent className="p-5 sm:p-6">
-        <div className="flex items-start justify-between mb-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
-            {label}
-          </span>
-          <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', c.bg)}>
-            <Icon className={cn('w-5 h-5', c.text)} />
-          </div>
-        </div>
-        <p className="numeric text-3xl sm:text-4xl text-[var(--foreground)]">{value}</p>
-      </CardContent>
-    </Card>
-  );
 }
 
 function getStreakMessage(streak: number): string {
