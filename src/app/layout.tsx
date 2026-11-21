@@ -4,14 +4,14 @@ import "./globals.css";
 import ThemeProvider from '@/components/ThemeProvider';
 
 const poppins = Poppins({
-  variable: "--font-poppins",
+  variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
 const inter = Inter({
-  variable: "--font-inter",
+  variable: "--font-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
