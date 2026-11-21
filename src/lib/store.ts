@@ -72,6 +72,10 @@ const deckColors = [
 
 const generateId = () => Math.random().toString(36).substring(2, 11);
 
+// Local-time YYYY-MM-DD (streak days should follow the user's timezone, not UTC).
+const localDateKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
 export const useStore = create<PockEdStore>()(
   persist(
     (set, get) => ({
@@ -177,14 +181,17 @@ export const useStore = create<PockEdStore>()(
 
       endSprint: () => {
         const { sprint, updateStats } = get();
-        if (!sprint.isActive) return null;
+        if (sprint.cards.length === 0) return null;
+
+        const cardsReviewed =
+          sprint.ratings.hard + sprint.ratings.good + sprint.ratings.easy;
 
         const session: SprintSession = {
           id: generateId(),
           deckId: sprint.deckId!,
           duration: sprint.duration,
-          cardsReviewed: sprint.currentCardIndex + 1,
-          xpEarned: (sprint.currentCardIndex + 1) * 10 + sprint.ratings.easy * 5,
+          cardsReviewed,
+          xpEarned: cardsReviewed * 10 + sprint.ratings.easy * 5,
           startedAt: sprint.startTime,
           completedAt: Date.now(),
           ratings: sprint.ratings,
@@ -218,11 +225,12 @@ export const useStore = create<PockEdStore>()(
           const newRatings = { ...state.sprint.ratings, [rating]: state.sprint.ratings[rating] + 1 };
 
           if (nextIndex >= state.sprint.cards.length) {
-            // Sprint complete - will be handled by endSprint call
+            // Last card rated — end the sprint; the view's effect calls endSprint().
             return {
               sprint: {
                 ...state.sprint,
                 ratings: newRatings,
+                isActive: false,
               },
             };
           }
@@ -243,7 +251,16 @@ export const useStore = create<PockEdStore>()(
 
       updateTimer: () => {
         set((state) => {
-          if (!state.sprint.isActive || state.sprint.remainingTime <= 0) return state;
+          if (!state.sprint.isActive) return state;
+          if (state.sprint.remainingTime <= 1) {
+            return {
+              sprint: {
+                ...state.sprint,
+                remainingTime: 0,
+                isActive: false,
+              },
+            };
+          }
           return {
             sprint: {
               ...state.sprint,
@@ -259,12 +276,15 @@ export const useStore = create<PockEdStore>()(
 
       updateStats: (session) => {
         set((state) => {
-          const today = new Date().toISOString().split('T')[0];
+          const now = new Date();
+          const today = localDateKey(now);
           const lastDate = state.stats.lastStudyDate;
           let newStreak = state.stats.currentStreak;
 
           if (lastDate !== today) {
-            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            const yesterday = localDateKey(
+              new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+            );
             if (lastDate === yesterday) {
               newStreak += 1;
             } else if (lastDate !== '') {

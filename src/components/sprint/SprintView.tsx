@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 import {
-  ArrowLeft,
   CheckCircle,
   Layers,
   Clock,
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import { formatDuration } from '@/lib/utils';
 import { useStore } from '@/lib/store';
@@ -27,7 +27,8 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 
 export function SprintView() {
-  const { sprint, endSprint, rateCard, resetSprint } =
+  const router = useRouter();
+  const { sprint, decks, startSprint, endSprint, rateCard, resetSprint } =
     useStore();
   const [isFlipped, setIsFlipped] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
@@ -183,6 +184,39 @@ export function SprintView() {
               </div>
             </motion.div>
           </AnimatePresence>
+        </div>
+      </div>
+    );
+  }
+
+  // Not started — pick a deck + duration (or prompt to create one)
+  if (!sprint.isActive) {
+    if (decks.length === 0) {
+      return (
+        <div className="min-h-screen bg-[var(--background)]">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+            <EmptyDecksState onCreate={() => router.push('/decks')} />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-[var(--background)]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-2 font-display">
+              Start a sprint
+            </h1>
+            <p className="text-[var(--muted-foreground)]">
+              Pick a deck and a focus window to begin.
+            </p>
+          </div>
+          <SprintSelection
+            decks={decks}
+            preselectedDeck={null}
+            onStart={(deckId, duration) => startSprint(deckId, duration)}
+          />
         </div>
       </div>
     );
