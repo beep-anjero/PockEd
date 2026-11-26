@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 import {
   CheckCircle,
@@ -30,7 +30,6 @@ export function SprintView() {
   const router = useRouter();
   const { sprint, decks, startSprint, endSprint, rateCard, resetSprint } =
     useStore();
-  const [isFlipped, setIsFlipped] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [completedSession, setCompletedSession] = useState<ReturnType<typeof endSprint> | null>(
     null
@@ -61,12 +60,13 @@ export function SprintView() {
   const progress =
     sprint.cards.length > 0 ? (sprint.currentCardIndex / sprint.cards.length) * 100 : 0;
 
-  const handleFlip = useCallback(() => setIsFlipped((v) => !v), []);
+  // Distractor answers can come from any deck, which keeps multiple-choice
+  // options available even when the sprint deck is small.
+  const cardPool = useMemo(() => decks.flatMap((deck) => deck.cards), [decks]);
 
   const handleRate = useCallback(
     (rating: 'hard' | 'good' | 'easy') => {
       rateCard(rating);
-      setIsFlipped(false);
     },
     [rateCard]
   );
@@ -75,7 +75,6 @@ export function SprintView() {
     resetSprint();
     setShowCompletion(false);
     setCompletedSession(null);
-    setIsFlipped(false);
   };
 
   // Show completion screen
@@ -229,10 +228,10 @@ export function SprintView() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 pt-24">
         {currentCard && (
           <Flashcard
+            key={currentCard.id}
             card={currentCard}
-            onFlip={handleFlip}
+            pool={cardPool}
             onRate={handleRate}
-            isFlipped={isFlipped}
             progress={progress}
             totalCards={sprint.cards.length}
             currentIndex={sprint.currentCardIndex}
