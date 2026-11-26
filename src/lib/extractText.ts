@@ -56,9 +56,11 @@ async function extractDocx(file: File): Promise<ExtractResult> {
 async function extractPdf(file: File): Promise<ExtractResult> {
   // Lazy-load pdfjs-dist so it only ships when a user actually uploads a PDF
   const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
-  // Use the worker file shipped with pdfjs-dist (copied via ?url so Next bundles it)
-  const workerUrl = (await import('pdfjs-dist/build/pdf.worker.mjs?url')).default;
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  // The worker is copied from node_modules into /public by
+  // scripts/copy-pdf-worker.mjs (see the predev/prebuild npm hooks). Serving it
+  // from a static URL keeps the worker and API versions in sync and avoids
+  // bundler-specific asset imports, which Next.js does not support.
+  pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
   const arrayBuffer = await file.arrayBuffer();
   const loadingTask = pdfjs.getDocument({ data: arrayBuffer });

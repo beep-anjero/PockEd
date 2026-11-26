@@ -35,7 +35,8 @@ declare module 'pdfjs-dist/build/pdf.mjs' {
   export function getDocument(options: { data: ArrayBuffer }): PDFLoadingTask;
 }
 
-// Next.js asset import suffix (?url returns the public URL of the asset).
+// Bundler asset import suffix (?url returns the public URL of the asset).
+// Not used for pdf.js workers anymore: they are served from /public instead.
 declare module '*?url' {
   const url: string;
   export default url;
